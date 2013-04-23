@@ -29,26 +29,30 @@ Game = {
 	}]
 }
 */
-/*
+
 // LocalStorageResource
-var LSR = {
-	var populate = function(){
-	};
-	var cleanup = function(){
-	};
-	var addPlayer = function(pl){
-	};
-	var editPlayer = function(pl){
-	};
+function LSR(){}
+
+LSR.prototype = {
+	populate : function(){
+		alert('ok');
+	},
+	cleanup : function(){
+	},
+	addPlayer : function(pl){
+	},
+	editPlayer : function(pl){
+	},
 
 	// Get
-	var getPlayerList = function(){
-	};
-	var getSinglePlayer = function(id){
-	};
+	getPlayerList : function(){
+	},
+	getSinglePlayer : function(id){
+	}
 
 };
-*/
+var lsr = new LSR();
+
 Controllers.controller('AppCtrl', function ($rootScope, $location, $scope) {
     $rootScope.$on('$locationChangeStart', function (event, newLocation) {
     });
@@ -59,6 +63,7 @@ Controllers.controller('AppCtrl', function ($rootScope, $location, $scope) {
 Controllers.controller('LHMSDLCtrl', function ($rootScope, $scope, $locale, $location, Title) {
     $scope.init = function () {
 		$scope.Title = Title;
+		lsr.populate();
     } ();
 });
 
