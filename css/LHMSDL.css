@@ -1,0 +1,19 @@
+.playerPanel
+{
+    display:inline-block;
+    background-color:  #0044cc;
+    margin: 3px ;
+    color: #eeeeee;
+    width: 100%;
+}
+.playerPanel .numero
+{
+    font-weight: bold;
+    display:inline;
+}
+
+.playerPanel .nom
+{
+    font-family: Calibri;
+    display:inline;
+}

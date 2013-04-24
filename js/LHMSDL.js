@@ -1,7 +1,8 @@
 var Services = angular.module('LHMSDL.services', []);
 var Controllers = angular.module('LHMSDL.controllers', []);
 var Resources = angular.module('LHMSDL.resources', []);
-var Facilite = angular.module('LHMSDL', [/*'LHMSDL.directives',*/'LHMSDL.resources', 'LHMSDL.controllers', 'LHMSDL.services', /*'LHMSDL.filters', */'ngResource']);
+var Directives = angular.module('LHMSDL.directives',[]);
+var Facilite = angular.module('LHMSDL', ['LHMSDL.directives','LHMSDL.resources', 'LHMSDL.controllers', 'LHMSDL.services', /*'LHMSDL.filters', */'ngResource']);
 
 //var path = '/Referenceur.svc';
 //var path = 'http://localhost\\:9999/Referenceur.svc';
@@ -15,7 +16,7 @@ Player = {
 }
 Team = {
 	id: Id,
-	nom: NomÉquipe,
+	nom: Nomï¿½quipe,
 	players: [id..]
 }
 Game = {
@@ -35,22 +36,43 @@ function LSR(){}
 
 LSR.prototype = {
 	populate : function(){
-		alert('ok');
+
 	},
 	cleanup : function(){
+        window.localStorage.removeItem('Players');
 	},
 	addPlayer : function(pl){
+        //alert(JSON.stringify(pl));
+        var  lst = lsr.getPlayerList();
+        lst.push(pl);
+        window.localStorage.setItem('Players',JSON.stringify(lst));
 	},
 	editPlayer : function(pl){
+        var lst = lsr.getPlayerList();
+        for(var i =0; i<lst.length;i++){
+            if(lst[i].id ==  pl.id){
+                lst[i] = pl;
+                break;
+            }
+        }
+        window.localStorage.setItem('Players',JSON.stringify(lst));
 	},
 
 	// Get
-	getPlayerList : function(){
+	getPlayerList : function(allowAdd){
+        var tmpPlayers = window.localStorage.getItem('Players');
+        var retValue = [];
+        if (tmpPlayers !== null) {
+            retValue = JSON.parse(tmpPlayers);
+        } else {
+            retValue.push({id:0, nom:'Nouveau joueur'})
+        }
+        return retValue;
 	},
 	getSinglePlayer : function(id){
 	}
-
 };
+
 var lsr = new LSR();
 
 Controllers.controller('AppCtrl', function ($rootScope, $location, $scope) {
@@ -63,14 +85,49 @@ Controllers.controller('AppCtrl', function ($rootScope, $location, $scope) {
 Controllers.controller('LHMSDLCtrl', function ($rootScope, $scope, $locale, $location, Title) {
     $scope.init = function () {
 		$scope.Title = Title;
-		lsr.populate();
+		//lsr.populate();
     } ();
+
+    $scope.gotoPlayer = function(){
+        $location.path('/joueur')
+    };
 });
 
 Controllers.controller('FormationCtrl', function ($rootScope, $scope, $locale, $location, Title) {
     $scope.init = function () {
 		$scope.Title = Title;
     } ();
+});
+
+Controllers.controller('JoueurCtrl', function($rootScope, $scope, $locale, $location, Title){
+    $scope.init = function (){
+        $scope.Title = Title;
+        //lsr.cleanup();
+    }();
+    //$scope.id = 0;
+    //$scope.nom = '';
+    $scope.editMode = false;
+    $scope.playerList = lsr.getPlayerList();
+
+    $scope.savePlayer = function(){
+        if ($scope.editMode) {
+            lsr.editPlayer($scope.player);
+        } else {
+            lsr.addPlayer($scope.player);
+        }
+        $scope.playerList = lsr.getPlayerList();
+    };
+
+    $scope.selectPlayer = function(player){
+        if(player.id==0){
+            $scope.player = {nom:''};
+            $scope.editMode = false;
+        }
+        else{
+            $scope.player = player;
+            $scope.editMode = true;
+        }
+    };
 });
 
 Services.service('LHMSDLService', function ($q) {
@@ -88,7 +145,7 @@ Facilite.config(function ($locationProvider, $routeProvider, $httpProvider) {
         controller: 'LHMSDLCtrl',
         resolve: {
             Title: function ($route) {
-                return 'Écran principale';
+                return 'Ã©cran principale';
             }
         }
     }).when('/formation', {
@@ -96,7 +153,7 @@ Facilite.config(function ($locationProvider, $routeProvider, $httpProvider) {
         controller: 'FormationCtrl',
         resolve: {
             Title: function ($route) {
-                return 'Écran Formation';
+                return 'Ã©cran Formation';
             }
         }
     }).when('/joueur', {
@@ -104,8 +161,21 @@ Facilite.config(function ($locationProvider, $routeProvider, $httpProvider) {
         controller: 'JoueurCtrl',
         resolve: {
             Title: function ($route) {
-                return 'Écran Joueur';
+                return 'Ã©cran Joueur';
             }
         }
     });
+});
+
+Directives.directive('PlayerTag',function(){
+    var directiveDefinitionObject = {
+        restrict:'EA',
+        template: '<div></div>',
+        compile: function compile(tElement, tAttrs) {
+            return function postLink(scope, iElement, iAttrs) {
+
+            }
+        }
+    };
+    return directiveDefinitionObject;
 });
