@@ -35,15 +35,14 @@ Game = {
 function LSR(){}
 
 LSR.prototype = {
-	populate : function(){
 
-	},
 	cleanup : function(){
         window.localStorage.removeItem('Players');
 	},
+    // joueur
 	addPlayer : function(pl){
         //alert(JSON.stringify(pl));
-        var  lst = lsr.getPlayerList();
+        var  lst = lsr.getPlayerList(true);
         lst.push(pl);
         window.localStorage.setItem('Players',JSON.stringify(lst));
 	},
@@ -57,9 +56,11 @@ LSR.prototype = {
         }
         window.localStorage.setItem('Players',JSON.stringify(lst));
 	},
-
-	// Get
 	getPlayerList : function(allowAdd){
+       if (typeof allowAdd === 'undefined'){
+           alert('Erreur du développeur');
+           return;
+       }
         var tmpPlayers = window.localStorage.getItem('Players');
         var retValue = [];
         if (tmpPlayers !== null) {
@@ -67,10 +68,41 @@ LSR.prototype = {
         } else {
             retValue.push({id:0, nom:'Nouveau joueur'})
         }
+        if(!allowAdd){
+            retValue.splice(0,1);
+        }
+
         return retValue;
 	},
-	getSinglePlayer : function(id){
-	}
+    // Équipe
+    saveTeam: function(teams){
+        window.localStorage.setItem('Team',JSON.stringify(teams));
+    },
+    switchTeam: function(pl,teamId){
+        // autosave
+        var teams = lsr.getTeams();
+        var wasInTeam = 0;
+        var t = _.findWhere(teams[0].joueur,{id : pl.id});
+        if(t !== undefined){
+            wasInTeam=1;
+        }
+        t = _.findWhere(teams[1].joueur,{id : pl.id});
+        if(t !== undefined){
+            wasInTeam=2;
+        }
+    },
+	getTeams: function() {
+        //window.localStorage.removeItem('Team');
+        var tmpTeam = window.localStorage.getItem('Team');
+        if(tmpTeam === null){
+            tmpTeam = [{id:1,nom:'Blanc',joueur:[1]},{id:2,nom:'Noir',joueur:[2]}];
+            lsr.saveTeam(tmpTeam);
+            tmpTeam = "";
+            tmpTeam = window.localStorage.getItem('Team');
+        }
+
+        return JSON.parse( tmpTeam);
+    }
 };
 
 var lsr = new LSR();
@@ -91,6 +123,9 @@ Controllers.controller('LHMSDLCtrl', function ($rootScope, $scope, $locale, $loc
     $scope.gotoPlayer = function(){
         $location.path('/joueur')
     };
+    $scope.gotoEquipe = function(){
+        $location.path('/equipe')
+    };
 });
 
 Controllers.controller('FormationCtrl', function ($rootScope, $scope, $locale, $location, Title) {
@@ -107,15 +142,17 @@ Controllers.controller('JoueurCtrl', function($rootScope, $scope, $locale, $loca
     //$scope.id = 0;
     //$scope.nom = '';
     $scope.editMode = false;
-    $scope.playerList = lsr.getPlayerList();
+    $scope.playerList = lsr.getPlayerList(true);
 
     $scope.savePlayer = function(){
+        // validation...
+        $scope.player.id = parseInt($scope.player.id);
         if ($scope.editMode) {
             lsr.editPlayer($scope.player);
         } else {
             lsr.addPlayer($scope.player);
         }
-        $scope.playerList = lsr.getPlayerList();
+        $scope.playerList = lsr.getPlayerList(true);
     };
 
     $scope.selectPlayer = function(player){
@@ -128,6 +165,68 @@ Controllers.controller('JoueurCtrl', function($rootScope, $scope, $locale, $loca
             $scope.editMode = true;
         }
     };
+});
+
+Controllers.controller('EquipeCtrl',function($rootScope, $scope, $locale, $location, Title){
+    // Bad code if more than 2 team... but doesn't care now, our league as 2 team.
+    $scope.Equipe1 = [];
+    $scope.Equipe2 = [];
+    $scope.pasEquipe=[];
+
+    var totals = null;
+    var teams = null;
+
+    $scope.splitTeam = function(){
+        /*
+        pour chacune des equipes
+            trouver joueur
+            si existe
+                ajouter
+                enlever de la liste des joueur
+            finsi
+        finpour
+        affiche la liste des joueur équipe #1 et #2
+        affiche la liste sans équipe.
+         */
+        for(var i=0;i<teams.length;i++){
+            var team = teams[i];
+            for(var j=0;j<team.joueur.length;j++){
+                var jid = team.joueur[j];
+                var pl = _.findWhere(totals,{id:jid});
+                if(pl != undefined){
+                    if(team.id == 1){
+                        $scope.Equipe1.push(pl);
+                    }else{
+                        $scope.Equipe2.push(pl);
+                    }
+                    pl.Team=team.id;
+                }
+            }
+        }
+        $scope.pasEquipe = _.where(totals, {Team: undefined});
+    };
+
+    $scope.init = function (){
+        $scope.Title = Title;
+        totals = lsr.getPlayerList(false);
+        teams = lsr.getTeams();
+
+        // fake team
+        //teams[0].joueur.push(totals[0]);
+        //teams[1].joueur.push(totals[1]);
+
+        $scope.splitTeam();
+
+    }();
+
+    $rootScope.$on('dropEvent', function(evt, dragged, dropped) {
+        var dropOnTeam = dropped[0].attributes.dropon.nodeValue;
+
+        lsr.switchTeam(dragged, dropOnTeam);
+
+    });
+
+
 });
 
 Services.service('LHMSDLService', function ($q) {
@@ -164,6 +263,14 @@ Facilite.config(function ($locationProvider, $routeProvider, $httpProvider) {
                 return 'écran Joueur';
             }
         }
+    }).when('/equipe', {
+        templateUrl: 'partials/equipe.html',
+        controller: 'EquipeCtrl',
+        resolve: {
+            Title: function ($route) {
+                return 'écran Equipe';
+            }
+        }
     });
 });
 
@@ -179,3 +286,68 @@ Directives.directive('PlayerTag',function(){
     };
     return directiveDefinitionObject;
 });
+
+Directives.directive("drag", ["$rootScope", function($rootScope) {
+
+    function dragStart(evt, element, dragStyle) {
+        element.addClass(dragStyle);
+        evt.dataTransfer.setData("id", evt.target.id);
+        evt.dataTransfer.effectAllowed = 'move';
+    };
+    function dragEnd(evt, element, dragStyle) {
+        element.removeClass(dragStyle);
+    };
+
+    return {
+        restrict: 'A',
+        link: function(scope, element, attrs)  {
+            attrs.$set('draggable', 'true');
+            scope.dragData = scope[attrs["drag"]];
+            scope.dragStyle = attrs["dragstyle"];
+            element.bind('dragstart', function(evt) {
+                $rootScope.draggedElement = scope.dragData;
+                dragStart(evt, element, scope.dragStyle);
+            });
+            element.bind('dragend', function(evt) {
+                dragEnd(evt, element, scope.dragStyle);
+            });
+        }
+    }
+}]);
+
+Directives.directive("drop", ['$rootScope', function($rootScope) {
+
+    function dragEnter(evt, element, dropStyle) {
+        evt.preventDefault();
+        element.addClass(dropStyle);
+    };
+    function dragLeave(evt, element, dropStyle) {
+        element.removeClass(dropStyle);
+    };
+    function dragOver(evt) {
+        evt.preventDefault();
+    };
+    function drop(evt, element, dropStyle) {
+        evt.preventDefault();
+        element.removeClass(dropStyle);
+    };
+
+    return {
+        restrict: 'A',
+        link: function(scope, element, attrs)  {
+            scope.dropData = scope[attrs["drop"]];
+            scope.dropStyle = attrs["dropstyle"];
+            element.bind('dragenter', function(evt) {
+                dragEnter(evt, element, scope.dropStyle);
+            });
+            element.bind('dragleave', function(evt) {
+                dragLeave(evt, element, scope.dropStyle);
+            });
+            element.bind('dragover', dragOver);
+            element.bind('drop', function(evt) {
+                drop(evt, element, scope.dropStyle);
+                $rootScope.$broadcast('dropEvent', $rootScope.draggedElement,element/* scope.dropData*/);
+            });
+        }
+    }
+}]);

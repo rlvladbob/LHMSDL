@@ -1,0 +1,37 @@
+<div>
+    <style>
+        .isDroping1
+        {
+            background-color: #d0e9c6;
+        }
+        .isDroping2
+        {
+            background-color: #d0e9c6;
+        }
+        .isDropingBad
+        {
+            background-color: #ff7f50;
+        }
+    </style>
+
+    <div style="float: left; width: 49%; border: 1px solid black;" dropon="1" drop="Equipe1" dropStyle="isDroping1">
+        Blanc
+        <ul>
+            <li ng-repeat="e in Equipe1" drag="e">{{e.nom}}</li>
+        </ul>
+    </div>
+
+    <div style="float: left; width: 49%; border: 1px solid black;" dropon="2" drop="Equipe2" dropStyle="isDroping2">
+        Noir
+        <ul>
+            <li ng-repeat="e in Equipe2" drag="e">{{e.nom}}</li>
+        </ul>
+    </div>
+
+    <div style="clear: both;" drop="pasEquipe" dropon="0" dropStyle="isDropingBad">
+        pas d'équipe
+        <ul>
+            <li ng-repeat="e in pasEquipe" drag="e">{{e.nom}}</li>
+        </ul>
+    </div>
+</div>
