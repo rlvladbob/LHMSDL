@@ -11,8 +11,14 @@
     <script src="js/angular-resource.min.js"></script>
     <script src="js/underscore.js"></script>
     <script src="js/LHMSDL.js"></script>
+    <script type="text/javascript">
+        function gotoMain(){
+            location.hash='#/';
+        }
+    </script>
 </head>
 <body ng-app="LHMSDL">
+    <button class="btn" onclick="gotoMain()">Retour au menu</button>
     <div ng-view></div>
 </body>
 </html>

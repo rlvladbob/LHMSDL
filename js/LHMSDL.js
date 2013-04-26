@@ -82,14 +82,34 @@ LSR.prototype = {
         // autosave
         var teams = lsr.getTeams();
         var wasInTeam = 0;
-        var t = _.findWhere(teams[0].joueur,{id : pl.id});
-        if(t !== undefined){
-            wasInTeam=1;
+        for(var t =0;t<teams[0].joueur.length;t++){
+            if(teams[0].joueur[t] == pl.id){
+                wasInTeam=1;
+                break;
+            }
         }
-        t = _.findWhere(teams[1].joueur,{id : pl.id});
-        if(t !== undefined){
-            wasInTeam=2;
+        for(var t =0;t<teams[1].joueur.length;t++){
+            if(teams[1].joueur[t] == pl.id){
+                wasInTeam=2;
+                break;
+            }
         }
+        if(teamId!=0){
+            teams[teamId-1].joueur.push(pl.id);
+        }
+        if(wasInTeam!=0){
+            var removeIndex = -1
+            for(var i=0;i<teams[wasInTeam-1].joueur.length;i++){
+                if(teams[wasInTeam-1].joueur[i]==pl.id){
+                    removeIndex = i;
+                    break;
+                }
+            }
+            if(removeIndex!=-1){
+                teams[wasInTeam-1].joueur.splice(removeIndex, 1);
+            }
+        }
+        lsr.saveTeam(teams);
     },
 	getTeams: function() {
         //window.localStorage.removeItem('Team');
@@ -107,18 +127,18 @@ LSR.prototype = {
 
 var lsr = new LSR();
 
-Controllers.controller('AppCtrl', function ($rootScope, $location, $scope) {
+Controllers.controller('LHMSDLCtrl', function ($rootScope, $scope, $locale, $location, Title) {
     $rootScope.$on('$locationChangeStart', function (event, newLocation) {
     });
     $rootScope.$on('$routeChangeStart', function (next, current) {
     });
-});
 
-Controllers.controller('LHMSDLCtrl', function ($rootScope, $scope, $locale, $location, Title) {
     $scope.init = function () {
 		$scope.Title = Title;
 		//lsr.populate();
     } ();
+
+
 
     $scope.gotoPlayer = function(){
         $location.path('/joueur')
@@ -144,6 +164,9 @@ Controllers.controller('JoueurCtrl', function($rootScope, $scope, $locale, $loca
     $scope.editMode = false;
     $scope.playerList = lsr.getPlayerList(true);
 
+    $scope.deletePlayer = function (){
+
+    };
     $scope.savePlayer = function(){
         // validation...
         $scope.player.id = parseInt($scope.player.id);
@@ -208,6 +231,10 @@ Controllers.controller('EquipeCtrl',function($rootScope, $scope, $locale, $locat
 
     $scope.init = function (){
         $scope.Title = Title;
+        $scope.Equipe1=[];
+        $scope.Equipe2=[];
+        $scope.pasEquipe=[];
+
         totals = lsr.getPlayerList(false);
         teams = lsr.getTeams();
 
@@ -217,13 +244,17 @@ Controllers.controller('EquipeCtrl',function($rootScope, $scope, $locale, $locat
 
         $scope.splitTeam();
 
-    }();
+    };
+    $scope.init();
 
     $rootScope.$on('dropEvent', function(evt, dragged, dropped) {
         var dropOnTeam = dropped[0].attributes.dropon.nodeValue;
 
         lsr.switchTeam(dragged, dropOnTeam);
 
+        $scope.init();
+
+        $scope.$apply();
     });
 
 
@@ -341,7 +372,10 @@ Directives.directive("drop", ['$rootScope', function($rootScope) {
                 dragEnter(evt, element, scope.dropStyle);
             });
             element.bind('dragleave', function(evt) {
-                dragLeave(evt, element, scope.dropStyle);
+                var rect = this.getBoundingClientRect();
+                //if(evt.clientX < rect.left || evt.clientX >rect.right || evt.clientY<rect.top||evt.clientY>rect.bottom){
+                    dragLeave(evt, element, scope.dropStyle);
+                //}
             });
             element.bind('dragover', dragOver);
             element.bind('drop', function(evt) {
