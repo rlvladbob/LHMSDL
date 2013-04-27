@@ -20,13 +20,15 @@ Team = {
 	players: [id..]
 }
 Game = {
-	id: id,
+	id: yyyyMMdd,
 	day: yyyyMMdd,
 	score: [{
 		playerId: id,
+        teamId: id,
 		goal: NombreBut,
 		assist: NombrePasse,
-		teamId: id
+		timestamp: timsetamp,
+		period: Periode
 	}]
 }
 */
@@ -122,10 +124,71 @@ LSR.prototype = {
         }
 
         return JSON.parse( tmpTeam);
+    },
+    // Parties
+    saveGame: function (game){
+        // tester le jour
+        var games = lsr.getGames();
+        game.id = game.jour;
+        game.star = [0,0,0]
+        games.push(game);
+        window.localStorage.setItem('Games',JSON.stringify(games));
+    },
+    updateGame:function(game){
+        var games = lsr.getGames();
+        for(var i=0;i<games.length;i++){
+            if(game.jour == games[i].jour){
+                games[i] = game;
+                break;
+            }
+        }
+        window.localStorage.setItem('Games',JSON.stringify(games));
+    },
+    getGames:function (){
+        var tmpGames = window.localStorage.getItem('Games');
+        var retValue = [];
+        if(tmpGames!==null){
+            retValue = JSON.parse(tmpGames);
+        }else{
+            retValue = JSON.parse("[]");
+        }
+        return retValue;
+    },
+    getGame:function(jour){
+        var games = lsr.getGames();
+        var gToLoad = _.findWhere(games,{jour:jour});
+        if(gToLoad !== null){
+            return gToLoad;
+        }else{
+            return JSON.parse("{}");
+        }
     }
 };
 
 var lsr = new LSR();
+
+var Games = function(game){
+    this.jour = game.jour;
+    if(game.score!= undefined){
+        this.score = game.score;
+        this.star = game.star;
+    }
+};
+
+Games.prototype = {
+    getScoreTeam: function(id){
+        var t = _.where(this.score,{teamId:id});
+        if(t != null){
+            return t.length;
+        }
+        else{
+            return 0;
+        }
+    },
+    getStar:function(id){
+        return this.star[id];
+    }
+};
 
 Controllers.controller('LHMSDLCtrl', function ($rootScope, $scope, $locale, $location, Title) {
     $rootScope.$on('$locationChangeStart', function (event, newLocation) {
@@ -138,13 +201,14 @@ Controllers.controller('LHMSDLCtrl', function ($rootScope, $scope, $locale, $loc
 		//lsr.populate();
     } ();
 
-
-
     $scope.gotoPlayer = function(){
         $location.path('/joueur')
     };
     $scope.gotoEquipe = function(){
-        $location.path('/equipe')
+        $location.path('/equipe');
+    };
+    $scope.gotoParties = function(){
+        $location.path('/parties');
     };
 });
 
@@ -199,6 +263,9 @@ Controllers.controller('EquipeCtrl',function($rootScope, $scope, $locale, $locat
     var totals = null;
     var teams = null;
 
+    /*
+     A changer avec celui dans PartieCtrl
+     */
     $scope.splitTeam = function(){
         /*
         pour chacune des equipes
@@ -226,7 +293,7 @@ Controllers.controller('EquipeCtrl',function($rootScope, $scope, $locale, $locat
                 }
             }
         }
-        $scope.pasEquipe = _.where(totals, {Team: undefined});
+        $scope.pasEquipe = _.where(totals, {Team: undefined}); // mais pas cette ligne!!
     };
 
     $scope.init = function (){
@@ -253,6 +320,141 @@ Controllers.controller('EquipeCtrl',function($rootScope, $scope, $locale, $locat
     });
 
 
+});
+
+Controllers.controller('PartiesCtrl', function ($rootScope, $scope, $locale, $location, Title) {
+    $scope.init = function () {
+        $scope.Title = Title;
+        $scope.parties = lsr.getGames();
+    };
+    $scope.init();
+
+    $scope.partie = {};
+    $scope.partie.id=0;
+
+    $scope.isNew=function(){
+        return ($scope.partie.id==0);
+    };
+
+    $scope.getTodayString = function (){
+        var today = new Date();
+        var m = '';
+        m =  (today.getMonth()+1).toString();
+        if(m.length==1){m = '0'+m;}
+        var j = '';
+        j = today.getDate().toString();
+        if(j.length==1){j='0'+j;}
+        return today.getFullYear()+'-'+ m +'-'+j;
+    };
+
+    $scope.setToday = function(){
+        $scope.partie.jour = $scope.getTodayString();
+    };
+
+    $scope.newGame = function(){
+        $scope.partie = {};
+        $scope.partie.id=0;
+
+    };
+
+    $scope.loadGame = function(g){
+        $scope.partie = new Games(g);
+    };
+
+    $scope.saveGame = function(){
+        if($scope.partie.jour !== undefined){
+            lsr.saveGame($scope.partie);
+            $scope.init();
+        }
+    };
+
+    $scope.isNotToday = function (){
+        return $scope.partie.jour != $scope.getTodayString();
+    };
+
+    $scope.gotoGame = function (game){
+        $location.path('/partie/' + game.jour);
+    };
+});
+
+Controllers.controller('PartieCtrl', function ($rootScope, $scope, $locale, $location, Title, partie) {
+    $scope.init = function () {
+        $scope.Title = Title;
+        $scope.partie = new Games(partie);
+        totals = lsr.getPlayerList(false);
+        teams = lsr.getTeams();
+        $scope.splitTeam();
+    };
+    var totals = null;
+    var teams = null;
+    $scope.Equipe1 = [];
+    $scope.Equipe2 = [];
+    $scope.goal=false;
+
+    $scope.splitTeam = function(){
+        /*
+        A changer avec celui dans EquipeCtrl
+         */
+        for(var i=0;i<teams.length;i++){
+            var team = teams[i];
+            for(var j=0;j<team.joueur.length;j++){
+                var jid = team.joueur[j];
+                var pl = _.findWhere(totals,{id:jid});
+                if(pl != undefined){
+                    if(team.id == 1){
+                        $scope.Equipe1.push(pl);
+                    }else{
+                        $scope.Equipe2.push(pl);
+                    }
+                    pl.Team=team.id;
+                }
+            }
+        }
+    };
+
+    $scope.init();
+
+    $scope.goalOrder = [];
+
+    $scope.clicked = function (p){
+        if($scope.goal){
+            $scope.goalOrder.push(p.id);
+            $scope.thisGoal += 1;
+            if($scope.thisGoal==3){
+                $scope.confirmGoal();
+            }
+        }
+    };
+
+    $scope.confirmGoal = function(){
+        //document.getElementById('GOAL').modal('show');
+        $('#GOAL').modal('show');
+    };
+
+    $scope.goalSaved = function(){
+        // $scope.goalOrder [1=>but, 2,3=>passe]
+        $('#GOAL').modal('hide');
+        $scope.goal=false;
+    };
+
+    $scope.goalCancel = function(){
+        $('#GOAL').modal('hide');
+        $scope.goal=false;
+    };
+
+    $scope.thereIsAGoal = function(){
+        $scope.goal=true;
+        $scope.thisGoal=0;
+    };
+
+    $scope.getClass = function (e){
+        if(e.id == $scope.goalOrder[0])
+            return "goal";
+        else if (e.id == $scope.goalOrder[1] )
+            return "pass";
+        else if (e.id == $scope.goalOrder[2] )
+            return "pass";
+    }
 });
 
 Services.service('LHMSDLService', function ($q) {
@@ -295,6 +497,25 @@ Facilite.config(function ($locationProvider, $routeProvider, $httpProvider) {
         resolve: {
             Title: function ($route) {
                 return 'écran Equipe';
+            }
+        }
+    }).when('/parties', {
+        templateUrl: 'partials/parties.html',
+        controller: 'PartiesCtrl',
+        resolve: {
+            Title: function ($route) {
+                return 'écran Parties';
+            }
+        }
+    }).when('/partie/:id', {
+        templateUrl: 'partials/partie.html',
+        controller: 'PartieCtrl',
+        resolve: {
+            Title: function ($route) {
+                return 'écran Partie';
+            },
+            partie: function ($route){
+                return lsr.getGame($route.current.params.id);
             }
         }
     });

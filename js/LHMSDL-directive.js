@@ -5,7 +5,7 @@
  * Time: 00:01
  * To change this template use File | Settings | File Templates.
  */
-
+/*
 Directives.directive('PlayerTag',function(){
     var directiveDefinitionObject = {
         restrict:'EA',
@@ -81,8 +81,8 @@ Directives.directive("drop", ['$rootScope', function($rootScope) {
             element.bind('dragover', dragOver);
             element.bind('drop', function(evt) {
                 drop(evt, element, scope.dropStyle);
-                $rootScope.$broadcast('dropEvent', $rootScope.draggedElement,element/* scope.dropData*/);
+                $rootScope.$broadcast('dropEvent', $rootScope.draggedElement,element);
             });
         }
     }
-}]);
+}]);*/

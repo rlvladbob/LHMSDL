@@ -1,0 +1,71 @@
+{{Title}}
+<div>
+    <div style="float: left; width: 49%; border: 1px solid black;" >
+        <table class="table-bordered">
+            <tr>
+                <td>
+                    Journée
+                </td>
+                <td>
+                    <input type="date" style="width:75%;" ng-model="partie.jour" />
+                    <button class="btn" ng-click="setToday()" ng-show="isNew()" >Aujourd'hui</button>
+                </td>
+            </tr>
+            <tr ng-show="isNew()">
+                <td colspan="2" style="height: 25px;">
+                    &nbsp;
+                </td>
+            </tr>
+            <tr ng-show="isNew()">
+                <td colspan="2" style="text-align: center;">
+                    <button class="btn-success" ng-click="saveGame()">Sauvegarder</button>
+                </td>
+            </tr>
+            <tr ng-hide="isNew()">
+                <td>
+                    Blanc
+                </td>
+                <td>
+                    {{partie.getScoreTeam(1)}}
+                </td>
+            </tr>
+            <tr ng-hide="isNew()">
+                <td>
+                    Noir
+                </td>
+                <td>
+                    {{partie.getScoreTeam(2)}}
+                </td>
+            </tr>
+            <tr ng-hide="isNew()">
+                <td>
+                    Étoiles
+                </td>
+                <td>
+                    <ol>
+                        <li debug-ng-repeat="e in partie.star">
+                            {{e}}
+                        </li>
+                    </ol>
+                </td>
+            </tr>
+            <tr ng-hide="isNew()">
+                <td colspan="2" style="text-align: center;">
+                    <button class="btn-danger" ng-click="gotoGame(partie)" ng-hide="isNotToday()" >Démarrer</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="float: left; width: 49%; border: 1px solid black;" >
+        <div class="parties" ng-click="newGame()" style="cursor: pointer;">
+            Nouvelle partie
+        </div>
+        <div ng-repeat="g in parties | orderBy:'jour':true" ng-click="loadGame(g)" >
+            <div style="cursor: pointer;">
+                {{g.jour}}
+            </div>
+
+        </div>
+    </div>
+</div>

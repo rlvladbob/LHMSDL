@@ -1,0 +1,89 @@
+{{Title}}
+<style>
+    .goal{
+        background-color: red;
+    }
+    .pass{
+        background-color: blue;
+    }
+</style>
+<div>
+    <div style="float: left; width: 49%; border: 1px solid black;" >
+        <table style="width: 100%; border-bottom: 1px solid black">
+            <tr>
+                <td>
+                    Blanc
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Pointage: {{partie.getScoreTeam(1)}}
+                </td>
+            </tr>
+        </table>
+        <table style="width: 100%; border-bottom: 1px solid black">
+            <tr ng-repeat="e in Equipe1">
+                <td>
+                    <div ng-click="clicked(e)" ng-class="getClass(e)">{{e.nom}}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div style="float: left; width: 49%; border: 1px solid black;" >
+        <table style="width: 100%; border-bottom: 1px solid black">
+            <tr>
+                <td>
+                    Noir
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Pointage: {{partie.getScoreTeam(2)}}
+                </td>
+            </tr>
+        </table>
+        <table style="width: 100%; border-bottom: 1px solid black">
+            <tr ng-repeat="e in Equipe2">
+                <td>
+                    <div ng-click="clicked(e)">{{e.nom}}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="clear: both; width:100%">
+        <button class="btn" style="width:30%" ng-click="thereIsAGoal()">
+            But
+        </button>
+        <button class="btn" style="width:30%">
+            Étoile
+        </button>
+        <button class="btn" style="width:30%">
+            Équipe
+        </button>
+        <div ng-show="goal">
+            <button class="btn-danger" ng-click="confirmGoal()">
+                But
+            </button>
+            <button class="btn-info ">
+                Annuler
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal hide fade" id="GOAL" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>Modal header</h3>
+    </div>
+    <div class="modal-body">
+        <p>But de : </p>
+        <p>Assisté de : </p>
+        <p>Et de : </p>
+    </div>
+    <div class="modal-footer">
+        <button class="btn" ng-click="goalCancel()">Annuler</button>
+        <button class="btn btn-primary" ng-click="goalSaved()">BUT</button>
+    </div>
+</div>
