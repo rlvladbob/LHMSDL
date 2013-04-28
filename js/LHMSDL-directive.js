@@ -5,7 +5,7 @@
  * Time: 00:01
  * To change this template use File | Settings | File Templates.
  */
-/*
+
 Directives.directive('PlayerTag',function(){
     var directiveDefinitionObject = {
         restrict:'EA',
@@ -85,4 +85,4 @@ Directives.directive("drop", ['$rootScope', function($rootScope) {
             });
         }
     }
-}]);*/
+}]);

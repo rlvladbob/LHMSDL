@@ -518,6 +518,6 @@ Facilite.config(function ($locationProvider, $routeProvider, $httpProvider) {
                 return lsr.getGame($route.current.params.id);
             }
         }
-    });
+    }).otherwise({redirectTo : '/'});
 });
 
